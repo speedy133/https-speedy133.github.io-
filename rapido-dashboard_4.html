@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rapido — live metrics model</title>
+<meta name="description" content="An interactive product-metrics model for Rapido: drag the levers and watch whether ride growth actually pays. Part of a product management portfolio.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#16171B; --ink2:#23252B; --line:#E7E7E2;
+  --paper:#FFFFFF; --bg:#F5F5F1; --soft:#FAFAF8;
+  --text:#2C2D31; --muted:#73746F; --mutedD:#A9AAA4;
+  --yellow:#FFCD00; --yellow-d:#5A4A00;
+  --green:#1F9E5A; --red:#D64545; --red-bg:#FBE9E9; --amber:#BA7517;
+  --serif:"Fraunces",Georgia,"Times New Roman",serif;
+  --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --r:14px; --rs:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;line-height:1.5}
+.wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+
+/* top bar */
+.topbar{background:var(--ink);color:#fff}
+.topbar .wrap{display:flex;align-items:center;justify-content:space-between;height:58px}
+.brand{display:flex;align-items:center;gap:12px}
+.pill{background:var(--yellow);color:var(--ink);font-weight:700;font-size:13px;letter-spacing:1.5px;padding:5px 12px;border-radius:20px}
+.brand span{font-size:13px;color:var(--mutedD)}
+.topbar .meta{font-size:12px;color:var(--mutedD);letter-spacing:.5px}
+
+/* hero */
+.hero{padding:54px 0 26px}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:8px}
+.eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block}
+h1{font-family:var(--serif);font-weight:600;font-size:clamp(30px,5vw,50px);line-height:1.04;color:var(--ink);margin:14px 0 0;letter-spacing:-.01em}
+.hl{background:linear-gradient(transparent 62%, var(--yellow) 62% 92%, transparent 92%);padding:0 2px}
+.lede{font-size:clamp(15px,2vw,18px);color:var(--text);max-width:760px;margin:18px 0 0;line-height:1.55}
+
+/* dashboard */
+.dash{margin:30px 0 0;display:grid;grid-template-columns:300px 1fr;gap:18px;align-items:start}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.controls{padding:20px}
+.ctl-h{font-family:var(--serif);font-weight:600;font-size:17px;color:var(--ink);margin-bottom:4px}
+.ctl-sub{font-size:12.5px;color:var(--muted);margin-bottom:18px}
+.lev{margin-bottom:18px}
+.lev .row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.lev label{font-size:13px;font-weight:500;color:var(--text)}
+.lev .val{font-size:13px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:5px;border-radius:5px;background:#E6E6E0;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--yellow);border:2px solid var(--ink);cursor:pointer;transition:transform .12s}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.12)}
+input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--yellow);border:2px solid var(--ink);cursor:pointer}
+input[type=range]:focus-visible{box-shadow:0 0 0 3px rgba(255,205,0,.4);border-radius:6px}
+.presets{margin-top:22px;border-top:1px solid var(--line);padding-top:16px;display:flex;flex-direction:column;gap:8px}
+.presets .pl{font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+.btn{font-family:var(--sans);font-size:13px;font-weight:500;text-align:left;padding:9px 12px;border:1px solid var(--line);background:var(--paper);border-radius:var(--rs);cursor:pointer;color:var(--text);transition:background .12s,border-color .12s}
+.btn:hover{background:var(--soft);border-color:#D8D8D2}
+.btn.on{background:var(--yellow);border-color:var(--yellow);color:var(--ink);font-weight:600}
+.btn:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(255,205,0,.4)}
+
+.results{display:flex;flex-direction:column;gap:18px}
+.tiles{display:grid;grid-template-columns:1.25fr 1fr 1fr;gap:14px}
+.tile{padding:16px 18px}
+.tag{font-size:9.5px;font-weight:700;letter-spacing:1px;background:var(--yellow);color:var(--ink);padding:3px 8px;border-radius:11px;display:inline-block}
+.tile .lab{font-size:12px;color:var(--muted);margin-top:9px}
+.tile .num{font-family:var(--serif);font-weight:600;font-size:30px;color:var(--ink);line-height:1.1;margin-top:3px;font-variant-numeric:tabular-nums}
+.tile .delta{font-size:12px;font-weight:600;margin-top:5px;font-variant-numeric:tabular-nums}
+.tile.warn{background:var(--red-bg);border-color:#F0D2D2}
+.up{color:var(--green)} .down{color:var(--red)} .flat{color:var(--muted)}
+
+.panels{display:grid;grid-template-columns:1fr 1.1fr;gap:14px}
+.panel{padding:16px 18px}
+.panel h3{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:13px;display:flex;align-items:center;gap:7px}
+.panel h3 .ic{width:18px;height:18px;color:var(--ink)}
+.fline{margin-bottom:11px}
+.fline .ft{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);margin-bottom:3px}
+.fline .ft b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
+.fbar-bg{height:9px;background:#F1F1EC;border-radius:5px;overflow:hidden}
+.fbar{height:9px;background:var(--yellow);border-radius:5px;transition:width .45s cubic-bezier(.4,0,.2,1)}
+.crow{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-top:1px solid var(--line);font-size:13px}
+.crow:first-of-type{border-top:none}
+.crow .cl{color:var(--text)}
+.crow .cv{font-weight:600;font-variant-numeric:tabular-nums}
+
+.illus{font-size:11.5px;color:var(--muted);font-style:italic;margin-top:14px}
+
+/* scenarios */
+.scen{padding:48px 0 10px}
+.scen h2{font-family:var(--serif);font-weight:600;font-size:clamp(22px,3vw,28px);color:var(--ink);margin-bottom:6px}
+.scen .s-sub{font-size:14.5px;color:var(--muted);margin-bottom:22px;max-width:640px}
+.scards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.scard{padding:20px;cursor:pointer;transition:transform .14s,box-shadow .14s}
+.scard:hover{transform:translateY(-3px);box-shadow:0 8px 22px rgba(0,0,0,.07)}
+.scard .sdot{width:11px;height:11px;border-radius:50%;display:inline-block;margin-right:8px;vertical-align:middle}
+.scard h4{font-family:var(--serif);font-weight:600;font-size:16.5px;color:var(--ink);display:inline}
+.scard p{font-size:13.5px;color:var(--text);margin:13px 0 16px;line-height:1.5}
+.scard .verdict{font-size:12px;font-weight:600;color:var(--ink);background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:8px 11px;text-align:center}
+.scard .try{font-size:11px;color:var(--muted);margin-top:9px;text-align:center;letter-spacing:.3px}
+
+.lesson{margin:26px 0 0;font-family:var(--serif);font-weight:600;font-size:clamp(17px,2.4vw,21px);color:var(--ink);text-align:center;padding:24px;background:var(--paper);border:1px solid var(--line);border-radius:var(--r)}
+.lesson em{font-style:normal;background:linear-gradient(transparent 60%, var(--yellow) 60% 92%, transparent 92%);padding:0 3px}
+
+/* about + footer */
+.about{padding:44px 0}
+.about .card{padding:24px 26px}
+.about h3{font-family:var(--serif);font-weight:600;font-size:18px;color:var(--ink);margin-bottom:10px}
+.about p{font-size:14px;color:var(--text);max-width:780px;margin-bottom:9px}
+.expl{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:22px;padding-top:22px;border-top:1px solid var(--line)}
+.expl h4{font-family:var(--serif);font-weight:600;font-size:15.5px;color:var(--ink);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.expl h4 .sq{width:9px;height:9px;border-radius:2px;background:var(--yellow);display:inline-block}
+.expl dl{margin:0}
+.expl dt{font-size:13.5px;font-weight:600;color:var(--ink);margin-top:13px}
+.expl dt:first-of-type{margin-top:0}
+.expl dd{font-size:13px;color:var(--text);margin:2px 0 0;line-height:1.45}
+@media(max-width:860px){.expl{grid-template-columns:1fr;gap:22px}}
+footer{background:var(--ink);color:var(--mutedD);padding:26px 0;font-size:12.5px}
+footer b{color:var(--yellow);font-weight:600}
+
+@media(max-width:860px){
+  .dash{grid-template-columns:1fr}
+  .tiles{grid-template-columns:1fr 1fr}
+  .panels{grid-template-columns:1fr}
+  .scards{grid-template-columns:1fr}
+}
+@media(max-width:520px){
+  .tiles{grid-template-columns:1fr}
+  .topbar .meta{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .fbar{transition:none}
+  .scard{transition:none}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar"><div class="wrap">
+  <div class="brand"><span class="pill">RAPIDO</span><span>Product metrics case study</span></div>
+  <div class="meta">Live model &middot; portfolio piece</div>
+</div></div>
+
+<div class="wrap">
+  <section class="hero">
+    <div class="eyebrow"><span class="dot"></span> Interactive model</div>
+    <h1>The same ride growth can be<br>healthy or <span class="hl">hollow</span>.</h1>
+    <p class="lede">Rapido monetizes its supply, not its rides &mdash; commission on bikes, a captain subscription on autos and cabs. Drag the levers and watch whether growth actually pays. The contribution-per-ride tile is the one number volume can&rsquo;t fake.</p>
+  </section>
+
+  <section class="dash">
+    <!-- controls -->
+    <div class="card controls">
+      <div class="ctl-h">Levers</div>
+      <div class="ctl-sub">Indexed to a baseline quarter (100).</div>
+
+      <div class="lev">
+        <div class="row"><label for="rng-d">Rider demand</label><span class="val" id="out-d">100</span></div>
+        <input type="range" id="rng-d" min="80" max="160" step="1" value="100" aria-label="Rider demand index">
+      </div>
+      <div class="lev">
+        <div class="row"><label for="rng-s">Auto/cab captain supply</label><span class="val" id="out-s">100</span></div>
+        <input type="range" id="rng-s" min="80" max="160" step="1" value="100" aria-label="Auto/cab captain supply index">
+      </div>
+      <div class="lev">
+        <div class="row"><label for="rng-f">Subscription fee</label><span class="val" id="out-f">100</span></div>
+        <input type="range" id="rng-f" min="70" max="160" step="1" value="100" aria-label="Subscription fee index">
+      </div>
+
+      <div class="presets">
+        <span class="pl">Scenarios</span>
+        <button class="btn" data-p="reset">Reset to baseline</button>
+        <button class="btn" data-p="trap">Over-acquisition trap</button>
+        <button class="btn" data-p="bal">Balanced growth</button>
+        <button class="btn" data-p="fee">Fee hike (the wrong fix)</button>
+      </div>
+    </div>
+
+    <!-- results -->
+    <div class="results">
+      <div class="tiles">
+        <div class="card tile">
+          <span class="tag">NORTH STAR</span>
+          <div class="lab">Weekly fulfilled rides</div>
+          <div class="num" id="ns-val">24.1M</div>
+          <div class="delta flat" id="ns-d">&mdash;</div>
+        </div>
+        <div class="card tile">
+          <div class="lab" style="margin-top:20px">Net revenue / week</div>
+          <div class="num" id="rev-val">&#8377;23.3 cr</div>
+          <div class="delta flat" id="rev-d">&mdash;</div>
+        </div>
+        <div class="card tile" id="contrib-card">
+          <span class="tag">BRIDGE</span>
+          <div class="lab">Contribution / ride</div>
+          <div class="num" id="contrib-val">&#8377;6.66</div>
+          <div class="delta flat" id="contrib-d">&mdash;</div>
+        </div>
+      </div>
+
+      <div class="panels">
+        <div class="card panel">
+          <h3><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h12M3 18h7"/></svg>Liquidity funnel</h3>
+          <div class="fline"><div class="ft"><span>Requests</span><b id="f-req-v">30.1M</b></div><div class="fbar-bg"><div class="fbar" id="f-req" style="width:100%"></div></div></div>
+          <div class="fline"><div class="ft"><span>Matched</span><b id="f-match-v">28.0M</b></div><div class="fbar-bg"><div class="fbar" id="f-match" style="width:93%"></div></div></div>
+          <div class="fline"><div class="ft"><span>Accepted</span><b id="f-acc-v">25.2M</b></div><div class="fbar-bg"><div class="fbar" id="f-acc" style="width:84%"></div></div></div>
+          <div class="fline"><div class="ft"><span>Completed</span><b id="f-comp-v">24.1M</b></div><div class="fbar-bg"><div class="fbar" id="f-comp" style="width:80%"></div></div></div>
+          <div class="crow"><span class="cl">Avg ETA</span><span class="cv" id="m-eta">4.2 min</span></div>
+          <div class="crow"><span class="cl">Unmet demand</span><span class="cv" id="m-unmet">6.0M</span></div>
+        </div>
+        <div class="card panel">
+          <h3><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="7" r="3.2"/><path d="M5 20c0-3.6 3.1-5.5 7-5.5s7 1.9 7 5.5"/></svg>Captains &amp; monetization</h3>
+          <div class="crow"><span class="cl">Active auto/cab captains</span><span class="cv" id="c-active">1.40M</span></div>
+          <div class="crow"><span class="cl">Utilization (rides/captain)</span><span class="cv" id="c-util">9.6</span></div>
+          <div class="crow"><span class="cl">Multi-homing rate</span><span class="cv" id="c-mh">42%</span></div>
+          <div class="crow"><span class="cl">Threshold-crossing rate</span><span class="cv" id="c-cross">55%</span></div>
+          <div class="crow"><span class="cl">Bike commission / wk</span><span class="cv" id="c-bike">&#8377;11.7 cr</span></div>
+          <div class="crow"><span class="cl">Auto/cab subscription / wk</span><span class="cv" id="c-sub">&#8377;11.6 cr</span></div>
+        </div>
+      </div>
+      <p class="illus">Illustrative model &mdash; relationships are directionally accurate; absolute figures are synthetic for demonstration.</p>
+    </div>
+  </section>
+
+  <section class="scen">
+    <h2>Three scenarios, one lesson</h2>
+    <p class="s-sub">Tap a card to load it into the model above, then watch which tiles move &mdash; and which one tells the truth.</p>
+    <div class="scards">
+      <div class="card scard" data-p="bal">
+        <div><span class="sdot" style="background:var(--green)"></span><h4>Balanced growth</h4></div>
+        <p>Demand and supply rise together. Utilization holds, crossing rate steady &mdash; rides and revenue climb in step.</p>
+        <div class="verdict">The healthy path</div>
+        <div class="try">Tap to load &rarr;</div>
+      </div>
+      <div class="card scard" data-p="trap">
+        <div><span class="sdot" style="background:var(--red)"></span><h4>Over-acquisition trap</h4></div>
+        <p>Supply outruns demand. North Star ticks up, but utilization and crossing rate fall &mdash; contribution per ride drops.</p>
+        <div class="verdict">Volume hides a leak</div>
+        <div class="try">Tap to load &rarr;</div>
+      </div>
+      <div class="card scard" data-p="fee">
+        <div><span class="sdot" style="background:var(--amber)"></span><h4>Fee hike (the wrong fix)</h4></div>
+        <p>Revenue and contribution jump green &mdash; but the North Star falls and multi-homing spikes. The marketplace contracts.</p>
+        <div class="verdict">Locally positive, globally negative</div>
+        <div class="try">Tap to load &rarr;</div>
+      </div>
+    </div>
+    <div class="lesson">The same ride growth can be healthy or hollow &mdash; only the <em>bridge metric</em> tells you which.</div>
+  </section>
+
+  <section class="about">
+    <div class="card">
+      <h3>What you&rsquo;re looking at</h3>
+      <p>This is the working model behind a product-metrics case study on Rapido. Its premise: because Rapido monetizes its supply side &mdash; commission on bikes, a captain subscription on autos and cabs &mdash; a fulfilled ride adds to the North Star equally but only converts to revenue under different conditions in each segment. Growing rides is therefore not the same as growing the business.</p>
+      <p>The model encodes that as a feedback loop. Add auto/cab captains faster than demand can feed them and utilization falls, fewer captains cross the &#8377;10,000 earnings threshold to become payers, and a rising share of rides generate North Star credit but no revenue. The contribution-per-ride tile is built to catch exactly that divergence.</p>
+
+      <div class="expl">
+        <div>
+          <h4><span class="sq"></span>What the three levers do</h4>
+          <dl>
+            <dt>Rider demand</dt>
+            <dd>How many ride requests come in. More demand raises utilization, fulfillment, and the odds captains hit the paying threshold.</dd>
+            <dt>Auto/cab captain supply</dt>
+            <dd>How many subscription-side captains are active. Add more than the demand can feed and each earns less, so fewer cross &#8377;10,000 to become payers &mdash; revenue stalls even as rides rise.</dd>
+            <dt>Subscription fee</dt>
+            <dd>What auto/cab captains pay. Raising it lifts revenue per payer, but pushes captains to multi-home, which quietly drains liquidity.</dd>
+          </dl>
+        </div>
+        <div>
+          <h4><span class="sq"></span>Key terms</h4>
+          <dl>
+            <dt>Contribution per ride &mdash; the bridge</dt>
+            <dd>Revenue minus cost on each completed ride. The one number ride volume can&rsquo;t fake; watch it beside the North Star.</dd>
+            <dt>Threshold-crossing rate</dt>
+            <dd>Share of auto/cab captains earning past &#8377;10,000 a month &mdash; the point they start paying the subscription. Falls when utilization falls.</dd>
+            <dt>Multi-homing rate</dt>
+            <dd>Share of captains also driving for Uber, Ola, or Namma Yatri. Rises when take-home drops &mdash; a leading signal that liquidity is about to weaken.</dd>
+            <dt>Utilization</dt>
+            <dd>Rides per active captain. The engine behind the threshold-crossing rate.</dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<footer><div class="wrap">
+  <b>Product management portfolio</b> &nbsp; Case study 03 &middot; Rapido metrics &amp; dashboard &nbsp;&mdash;&nbsp; full written case study and deck available on request.
+</div></footer>
+
+<script>
+(function(){
+  var B={riders:14.0,rpr:2.15,bikeFare:55,bikeTake:0.17,caps:1.40,util0:9.6,cross0:0.55,fee:150,incentive:3,eta0:4.2,mh0:0.42};
+  function cl(v,a,b){return Math.max(a,Math.min(b,v));}
+  function model(d,s,f){
+    var riders=B.riders*d, requests=riders*B.rpr;
+    var util=B.util0*(d/s);
+    var mh=cl(B.mh0+0.8*(1-util/B.util0)+0.35*(f-1),0.18,0.90);
+    var matchRate=cl(0.93+0.045*Math.tanh((s/d-1)*1.4),0.86,0.99);
+    var supplyEase=cl(s/d,0.6,1.8);
+    var accRate=cl(0.90+0.06*Math.tanh((supplyEase-1)*1.5)-0.30*Math.max(0,mh-0.55),0.70,0.98);
+    var cancelRate=cl(0.045+0.03*Math.max(0,mh-0.55),0.03,0.14);
+    var matched=requests*matchRate, accepted=matched*accRate, fulfilled=accepted*(1-cancelRate);
+    var bikeShare=cl(0.52-0.10*Math.tanh((s/d-1)*1.4),0.40,0.62);
+    var bikeRides=fulfilled*bikeShare, autoCabRides=fulfilled-bikeRides;
+    var cross=cl(B.cross0*Math.pow(util/B.util0,0.9),0.12,0.85);
+    var paying=B.caps*s*cross;
+    var subRev=paying*(B.fee*f)/10, bikeRev=bikeRides*B.bikeFare*B.bikeTake/10;
+    var incent=fulfilled*B.incentive/10, totalRev=bikeRev+subRev;
+    var contrib=totalRev-incent, cpr=contrib*10/fulfilled;
+    return {fulfilled:fulfilled,riders:riders,requests:requests,matched:matched,accepted:accepted,
+      blendFulf:fulfilled/requests,eta:cl(B.eta0*Math.pow(d/s,0.5),2.6,9.0),unmet:requests-fulfilled,
+      caps:B.caps*s,util:util,mh:mh,cross:cross,bikeRev:bikeRev,subRev:subRev,totalRev:totalRev,cpr:cpr};
+  }
+  var base=model(1,1,1);
+  var presets={reset:[100,100,100],trap:[105,145,100],bal:[125,122,100],fee:[105,145,135]};
+  var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  var g=function(id){return document.getElementById(id);};
+  var disp={ns:base.fulfilled,rev:base.totalRev,cpr:base.cpr};
+
+  function tween(key,el,to,fmt){
+    var from=disp[key]; disp[key]=to;
+    if(reduce){el.textContent=fmt(to);return;}
+    var t0=performance.now(),dur=420;
+    function step(now){
+      var k=Math.min(1,(now-t0)/dur); k=1-Math.pow(1-k,3);
+      el.textContent=fmt(from+(to-from)*k);
+      if(k<1)requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+  function pd(el,cur,b){
+    var p=(cur-b)/b*100, s=p>=0?'+':'';
+    el.textContent=(Math.abs(p)<0.5?'\u2014':(s+p.toFixed(1)+'% vs base'));
+    el.className='delta '+(Math.abs(p)<0.5?'flat':(p>=0?'up':'down'));
+  }
+  function render(){
+    var d=+g('rng-d').value/100,s=+g('rng-s').value/100,f=+g('rng-f').value/100;
+    g('out-d').textContent=Math.round(d*100); g('out-s').textContent=Math.round(s*100); g('out-f').textContent=Math.round(f*100);
+    var m=model(d,s,f);
+    tween('ns',g('ns-val'),m.fulfilled,function(v){return v.toFixed(1)+'M';});
+    tween('rev',g('rev-val'),m.totalRev,function(v){return '\u20B9'+v.toFixed(1)+' cr';});
+    tween('cpr',g('contrib-val'),m.cpr,function(v){return '\u20B9'+v.toFixed(2);});
+    pd(g('ns-d'),m.fulfilled,base.fulfilled);
+    pd(g('rev-d'),m.totalRev,base.totalRev);
+    pd(g('contrib-d'),m.cpr,base.cpr);
+    g('contrib-card').classList.toggle('warn', m.cpr<base.cpr*0.985);
+    g('f-req-v').textContent=m.requests.toFixed(1)+'M';
+    g('f-match-v').textContent=m.matched.toFixed(1)+'M';
+    g('f-acc-v').textContent=m.accepted.toFixed(1)+'M';
+    g('f-comp-v').textContent=m.fulfilled.toFixed(1)+'M';
+    g('f-req').style.width='100%';
+    g('f-match').style.width=Math.round(m.matched/m.requests*100)+'%';
+    g('f-acc').style.width=Math.round(m.accepted/m.requests*100)+'%';
+    g('f-comp').style.width=Math.round(m.fulfilled/m.requests*100)+'%';
+    g('m-eta').textContent=m.eta.toFixed(1)+' min';
+    g('m-unmet').textContent=m.unmet.toFixed(1)+'M';
+    g('c-active').textContent=m.caps.toFixed(2)+'M';
+    g('c-util').textContent=m.util.toFixed(1);
+    var mh=g('c-mh'); mh.textContent=Math.round(m.mh*100)+'%';
+    mh.style.color=m.mh>0.6?'var(--red)':(m.mh>0.5?'var(--amber)':'var(--ink)');
+    var cr=g('c-cross'); cr.textContent=Math.round(m.cross*100)+'%';
+    cr.style.color=m.cross<base.cross*0.92?'var(--red)':'var(--ink)';
+    g('c-bike').textContent='\u20B9'+m.bikeRev.toFixed(1)+' cr';
+    g('c-sub').textContent='\u20B9'+m.subRev.toFixed(1)+' cr';
+  }
+  function setP(p){
+    var v=presets[p]; if(!v)return;
+    g('rng-d').value=v[0]; g('rng-s').value=v[1]; g('rng-f').value=v[2];
+    document.querySelectorAll('.btn[data-p]').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-p')===p);});
+    render();
+  }
+  ['rng-d','rng-s','rng-f'].forEach(function(id){
+    g(id).addEventListener('input',function(){
+      document.querySelectorAll('.btn[data-p]').forEach(function(b){b.classList.remove('on');});
+      render();
+    });
+  });
+  document.querySelectorAll('[data-p]').forEach(function(el){
+    el.addEventListener('click',function(){
+      var p=el.getAttribute('data-p'); setP(p);
+      if(el.classList.contains('scard')){document.querySelector('.dash').scrollIntoView({block:'start'});}
+    });
+  });
+  setP('reset');
+})();
+</script>
+</body>
+</html>
